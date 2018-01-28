@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Hello World!</title>
+    <link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-alpha.6/css/bootstrap.min.css'>
+    <style media="screen">
+      .auto-resize-width {
+        max-width: 90%;
+      }
+
+      .auto-resize-height {
+        max-height: 100vh;
+      }
+
+      .scroll-y {
+        overflow-y: scroll;
+      }
+
+      .img_margin {
+        margin: 5px;
+      }
+
+      #preview {
+        background: #dee2e6;
+      }
+
+      #center-vier {
+        box-shadow: 0 5px 10px rgba(0, 0, 0, 0.6), 0 3px 5px rgba(0, 0, 0, 0.35);
+      }
+
+      .border-top {
+        border-top: 1px solid #ffffff;
+      }
+
+      .preview_hl {
+        border: 2px solid rgba(47,155,255,1);
+        /* background: rgba(0, 120, 160, 160); */
+        border-radius: 10px;
+      }
+
+      .preview-card {
+        /* float: left; */
+        /*overflow: hidden;*/
+        margin-bottom: 5px;
+        display: block;
+      }
+
+      .input-block {
+        margin: 10px;
+      }
+    </style>
+  </head>
+  <body>
+
+
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-2 auto-resize-height scroll-y" id="preview">
+
+        </div>
+
+        <div class="col-md-10" id="center-view">
+
+          <div class="form-group row has-success input-block">
+            <label for="id-input" class="col-sm-2 col-form-label">BoxIndex</label>
+            <div class="col-sm-10">
+              <input type="email" class="form-control form-control-success" id="id-input" placeholder="name@example.com">
+              <!-- <div class="form-control-feedback">Success! You've done it.</div> -->
+            </div>
+          </div>
+
+          <img src="" alt="" id="center-img" class="auto-resize-width">
+        </div>
+
+      </div>
+    </div>
+  </body>
+
+  <script>window.$ = window.jQuery = require('./jquery.js');</script>
+  <script src="./tether.min.js"></script>
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-alpha.6/js/bootstrap.min.js'></script>
+  <script src="./backend.js"></script>
+</html>
