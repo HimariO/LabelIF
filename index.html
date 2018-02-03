@@ -60,7 +60,7 @@
 
         </div>
 
-        <div class="col-md-10" id="center-view">
+        <div class="col-md-10 auto-resize-height" id="center-view">
 
           <div class="form-group row has-success input-block">
             <label for="id-input" class="col-sm-2 col-form-label">BoxIndex</label>
@@ -70,15 +70,17 @@
             </div>
           </div>
 
-          <img src="" alt="" id="center-img" class="auto-resize-width">
+          <canvas id="center-canvas" />
+          <!-- <img src="" alt="" id="center-img" class="auto-resize-width"> -->
         </div>
 
       </div>
     </div>
   </body>
 
-  <script>window.$ = window.jQuery = require('./jquery.js');</script>
-  <script src="./tether.min.js"></script>
+  <script>window.$ = window.jQuery = require('./lib/jquery.js');</script>
+  <script src="./lib/tether.min.js"></script>
+  <script src="./lib/fabric.min.js"></script>
   <script src='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-alpha.6/js/bootstrap.min.js'></script>
   <script src="./backend.js"></script>
 </html>

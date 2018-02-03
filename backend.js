@@ -1,47 +1,19 @@
 const fs = require('fs')
 const fse = require('fs-extra')
 const path = require('path')
+const util = require('./util')
+const Store = require('./store')
 
 imgs_path = []
+xmls_path = []
+xmls_obj = []
 
-function Store() {
-  this.channels = {}
-  this.channels_last_msg = {}
-  this.channels_state = {}
-}
+var canvas_dom = document.getElementById('center-canvas')
+var canvas_ctx = canvas_dom.getContext('2d')
+var canvas = undefined
 
-Store.prototype.AddChannel = function(channel_name, inint_state){
-  this.channels[channel_name] = []
-  this.channels_last_msg[channel_name] = {}
-  this.channels_state[channel_name] = inint_state
-}
-
-
-Store.prototype.Subscript = function(channel_name, callback){
-  if(this.channels[channel_name] !== undefined)
-    this.channels[channel_name].push(callback)
-  else
-    throw Error(`Channel '${channel_name}' doesn't exist!`)
-}
-
-Store.prototype.Send = function(channel_name, type, message){
-  console.log(message)
-
-  if(this.channels[channel_name] !== undefined){
-
-    for(var func of this.channels[channel_name]){
-      new_msg = Object.assign({}, {'last_msg': this.channels[channel_name]}, message)
-      func(type, new_msg)
-    }
-
-    this.channels_last_msg[channel_name] = {
-      'message': message,
-      'type': type,
-    }
-  }
-  else
-    throw Error(`Channel '${channel_name}' doesn't exist!`)
-}
+var copy_dom = document.createElement('canvas')
+var copy_ctx = copy_dom.getContext('2d')
 
 
 var store = new Store()
@@ -50,7 +22,12 @@ const CENTER_VIEW_EVENT = 'CENTER_VIEW_EVENT'
 const DOC_EVENT = 'DOC_EVENT'
 
 store.AddChannel(PREVIEW_EVENT, {})
-store.AddChannel(CENTER_VIEW_EVENT, {'current_img_id': 0})
+store.AddChannel(CENTER_VIEW_EVENT, {
+  current_img_id: 0,
+  current_boxs: [],
+  current_xml: undefined,
+  operation_mode: 'VIEW',
+})
 store.AddChannel(DOC_EVENT, {})
 
 
@@ -59,8 +36,7 @@ function UpdateCenterImg(type, message) {
     return
 
   var img_path = message['img']
-  $('#center-img').attr('src', img_path)
-
+  LoadCanvas(img_path, message['id'])
 }
 
 store.Subscript(PREVIEW_EVENT, UpdateCenterImg)
@@ -73,6 +49,7 @@ function SelectByKey(type, message) {
   console.log('deubg ', c_id)
 
   switch(message.key_code) {
+    /* Select Image By Key */
     case 38: // up
     var new_id = c_id > 0 ? c_id - 1 : c_id
     store.channels_state[CENTER_VIEW_EVENT].current_img_id = new_id
@@ -90,6 +67,15 @@ function SelectByKey(type, message) {
 
     case 39: // right
     break
+
+    /* Select Operation Mode By Key */
+    case 27: // Esc
+    store.channels_state[CENTER_VIEW_EVENT].operation_mode = 'VIEW'
+    break
+
+    case 77: // M
+    store.channels_state[CENTER_VIEW_EVENT].operation_mode = 'DRAW_BOX'
+    break
   }
 }
 
@@ -101,7 +87,9 @@ function UpdateByKey(type, message) {
     return
 
   var id = message['img_id']
-  $('#center-img').attr('src', imgs_path[id])
+  // $('#center-img').attr('src', imgs_path[id])
+  LoadCanvas(imgs_path[id], id)
+
   $('.preview_hl').removeClass('preview_hl')
   $(`#preview-${id}`).addClass('preview_hl')
   var parent = $(`#preview`)
@@ -136,9 +124,232 @@ function ProcessSubmit(type, message) {
     )
   }
 }
+
 store.Subscript(CENTER_VIEW_EVENT, ProcessSubmit)
 
+
 /*----------------------------------------UI Action-------------------------------------------------*/
+
+
+function InitCanvasDragDrop() {
+  var box, isDown, origX, origY;
+
+  canvas.on('mouse:down', function(o){
+    isDown = true
+    var pointer = canvas.getPointer(o.e)
+    origX = pointer.x
+    origY = pointer.y
+
+    switch (store.channels_state[CENTER_VIEW_EVENT].operation_mode) {
+      case 'DRAW_BOX':
+        box = new fabric.Rect({
+          left: pointer.x,
+          top: pointer.y,
+          width: 1,
+          height: 1,
+          opacity: 0.7,
+          strokeWidth: 5,
+          stroke: 'red',
+          fill: 'rgba(0,0,0,0)',
+          selectable: true,
+          originX: 'left',
+          originY: 'top'
+        })
+
+        canvas.add(box)
+
+        break;
+      default:
+        console.log('Canvas got click!')
+    }
+  })
+
+  canvas.on('mouse:move', function(o){
+    if (!isDown) return
+
+    switch (store.channels_state[CENTER_VIEW_EVENT].operation_mode) {
+      case 'DRAW_BOX':
+        var pointer = canvas.getPointer(o.e)
+        var left = pointer.x < origX ? pointer.x : origX
+        var top = pointer.y < origY ? pointer.y : origY
+
+        box.set({
+          left: left,
+          top: top,
+          width: Math.abs(origX - pointer.x),
+          height: Math.abs(origY - pointer.y),
+        })
+
+        canvas.renderAll()
+        break;
+      default:
+        // console.log('Canvas got click!')
+    }
+  })
+
+  canvas.on('mouse:up', function(o){
+    isDown = false
+
+    switch (store.channels_state[CENTER_VIEW_EVENT].operation_mode) {
+      case 'DRAW_BOX':
+        box.set({
+          stroke: 'rgb(129, 250, 92)',
+        })
+        box.setCoords()
+
+        store.channels_state[CENTER_VIEW_EVENT].current_boxs.push({box: box, gadget: []})
+        canvas.renderAll()
+        break
+      default:
+        // console.log('Canvas got click!')
+    }
+  })
+}
+
+
+function InitCanvasSize() {
+  var parent = $('#center-view')
+  var h = $(window).height()
+  var w = parent.width()
+
+  canvas_dom.width = canvas_ctx.width = w
+  canvas_dom.height = canvas_ctx.height = h
+
+  copy_dom.width = copy_ctx.width = w
+  copy_dom.height = copy_ctx.height = h
+}
+
+
+function LoadBoxes(xml_id, scale) {
+
+  if(store.channels_state[CENTER_VIEW_EVENT].current_xml !== undefined) {
+    var old_id = xmls_obj.indexOf(store.channels_state[CENTER_VIEW_EVENT].current_xml)
+    var u_xml = util.updateXML(
+      store.channels_state[CENTER_VIEW_EVENT].current_boxs,
+      scale,
+      store.channels_state[CENTER_VIEW_EVENT].current_xml
+    )
+    util.writebackXML(u_xml, xmls_path[old_id])
+  }
+
+  var xml = xmls_obj[xml_id]
+  store.channels_state[CENTER_VIEW_EVENT].current_xml = xml
+  console.dir(xml)
+
+  for(var old_box of store.channels_state[CENTER_VIEW_EVENT].current_boxs) {
+    canvas.remove(old_box.box)
+    for(var g of old_box.gadget) {
+      canvas.remove(g)
+    }
+  }
+
+  store.channels_state[CENTER_VIEW_EVENT].current_boxs = []
+  var obj_count = 1
+
+  for(var ob of xml.annotation.object) {
+    ob.uuid = parseInt(ob.uuid)
+
+    var left = ob.bndbox.xmin * scale
+    var top = ob.bndbox.ymin * scale
+    var right = ob.bndbox.xmax * scale
+    var bottom = ob.bndbox.ymax * scale
+
+    let box = new fabric.Rect({
+      left: left,
+      top: top,
+      width: Math.abs(right - left),
+      height: Math.abs(bottom - top),
+      opacity: 0.7,
+      strokeWidth: 5,
+      stroke: 'rgba(129, 250, 92, 170)',
+      fill: 'rgba(0,0,0,0)',
+      selectable: true,
+      originX: 'left',
+      originY: 'top'
+    })
+
+    box._removed = false
+    box._uuid = ob.uuid !== undefined ? ob.uuid : obj_count
+    box._wrong_one = false
+    box._name = ob.name
+
+    if(ob.uuid !== undefined) {
+      if(ob.uuid < 0){
+        box.set({stroke: 'rgba(247, 162, 49, 170)'})
+        box._wrong_one = true
+      }
+    }
+
+    let wrong_btn = new fabric.Circle({
+      left: 0,
+      top: 0,
+      radius: 6,
+      strokeWidth: 0,
+      stroke: 'rgba(0,0,0,0)',
+      fill: 'rgba(247, 162, 49, 170)',
+      selectable: false,
+      originX: 'left',
+      originY: 'top'
+    })
+
+    let del_btn = new fabric.Circle({
+      left: 0,
+      top: 0,
+      radius: 6,
+      strokeWidth: 0,
+      stroke: 'rgba(0,0,0,0)',
+      fill: 'rgba(247, 49, 49, 170)',
+      selectable: false,
+      originX: 'left',
+      originY: 'top'
+    })
+
+    wrong_btn.on('mousedown', function(e) {
+      box._wrong_one = true
+      box.set({stroke: 'rgba(247, 162, 49, 170)'})
+      canvas.renderAll()
+    })
+
+    del_btn.on('mousedown', function(e) {
+      canvas.remove(box)
+      canvas.remove(del_btn)
+      canvas.remove(wrong_btn)
+      canvas.renderAll()
+      box._removed = true
+    })
+
+    canvas.add(box)
+    canvas.add(wrong_btn)
+    canvas.add(del_btn)
+
+    util.bindObjects(canvas, box, [
+      {f_object: wrong_btn, align: 'TOP_LEFT', offset: {top: 8}},
+      {f_object: del_btn, align: 'TOP_LEFT', offset: {top: 8, left: 24}}
+    ])
+
+    store.channels_state[CENTER_VIEW_EVENT].current_boxs.push({box: box, gadget: [wrong_btn, del_btn]})
+    obj_count++
+  }
+
+  canvas.renderAll()
+}
+
+
+function LoadCanvas(src, img_id) {
+
+  fabric.Image.fromURL(src, function(img) {
+    var img_ratio = img.width / img.height
+    var target_height = canvas_ctx.height > canvas_ctx.width ? canvas_ctx.height : canvas_ctx.width * (1 / img_ratio)
+    var target_width = canvas_ctx.width > canvas_ctx.height ? canvas_ctx.width : canvas_ctx.height * img_ratio
+    var scale = target_width / img.width
+
+    img.set({width: target_width, height: target_height, originX: 'left', originY: 'top'})
+    canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas))
+    LoadBoxes(img_id, scale)
+  })
+
+  store.Send(CENTER_VIEW_EVENT, 'IMAGE_LOADED', {img: src})
+}
 
 
 function AppendPreview(parent_selector, img_src, id) {
@@ -165,22 +376,53 @@ function AppendPreview(parent_selector, img_src, id) {
 }
 
 
-fs.readdir('img', (err, files) => {
-  var count = 0
-  for(var f of files){
-    if(f.includes('.jpg') || f.includes('.png')){
-      var join_path = path.join(__dirname, 'img', f)
-      AppendPreview('#preview', join_path, count)
-      imgs_path.push(join_path)
-      count++
+$(window).load(() => {
+  InitCanvasSize()
+  canvas = new fabric.Canvas(canvas_dom)
+  InitCanvasDragDrop()
+
+  var img_root = 'dataset/JPEGImages'
+  var xml_root = 'dataset/Annotations'
+
+  fs.readdir(img_root, (err, files) => {
+    var count = 0
+    for(var f of files){
+      if(f.includes('.jpg') || f.includes('.png')){
+        var join_path = path.join(__dirname, img_root, f)
+        AppendPreview('#preview', join_path, count)
+        imgs_path.push(join_path)
+        count++
+      }
     }
-  }
+  })
+
+  fs.readdir(xml_root, (err, files) => {
+    var count = 0
+
+    for(var f of files){
+      if(f.includes('.xml')){
+        var join_path = path.join(__dirname, xml_root, f)
+        let id = count  // make sure id not changed when xml finish parsing.
+
+        xmls_path.push(join_path)
+        xmls_obj.push(null)  // preser position for xmlobj
+
+        util.parsePOCXML(join_path).then((result) => {
+          xmls_obj[id] = result
+        })
+        count++
+      }
+    }
+  })
 })
+
 
 $(document).keydown((event)=>{
   // console.log('doc keypress')
   store.Send(DOC_EVENT, 'KEY_PRESS', {'key_code': event.which})
+  // store.Send(CENTER_VIEW_EVENT, 'KEY_PRESS', {'key_code': event.which})
 })
+
 
 $('#id-input').keyup(function(event){
   if(event.keyCode == 13){

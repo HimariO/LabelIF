@@ -1,1 +1,6 @@
 node_modules
+*.zip
+img
+dataset
+*.xml
+*.jpg
