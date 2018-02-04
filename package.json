@@ -4,7 +4,10 @@
   "description": "A minimal Electron application",
   "main": "main.js",
   "scripts": {
-    "start": "electron main.js"
+    "start": "electron main.js",
+    "build": "electron-packager . LabelIF --out build",
+    "build_win": "electron-packager . LabelIF --out build --platform win32 ",
+    "build_mac": "electron-packager . LabelIF --out build --platform darwin "
   },
   "repository": {
     "type": "git",
@@ -23,7 +26,8 @@
   },
   "homepage": "https://github.com/atom/electron-quick-start#readme",
   "devDependencies": {
-    "electron": "~1.7.8"
+    "electron": "~1.7.8",
+    "electron-packager": "^10.1.2"
   },
   "dependencies": {
     "bluebird": "^3.5.1",

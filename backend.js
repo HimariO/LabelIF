@@ -7,6 +7,7 @@ const Store = require('./store')
 imgs_path = []
 xmls_path = []
 xmls_obj = []
+xmls_obj_mod = []
 
 var canvas_dom = document.getElementById('center-canvas')
 var canvas_ctx = canvas_dom.getContext('2d')
@@ -195,9 +196,26 @@ function InitCanvasDragDrop() {
         box.set({
           stroke: 'rgb(129, 250, 92)',
         })
+
+        f_box = util.XMLObj2Box(
+          {
+            uuid: store.channels_state[CENTER_VIEW_EVENT].current_boxs.length + 1,
+            name: 'person',
+          },
+          canvas,
+          1,
+          box
+        )
+
         box.setCoords()
 
-        store.channels_state[CENTER_VIEW_EVENT].current_boxs.push({box: box, gadget: []})
+        util.bindObjects(canvas, box, [
+          {f_object: f_box.gadget[0], align: 'TOP_LEFT', offset: {top: 8}},
+          {f_object: f_box.gadget[1], align: 'TOP_LEFT', offset: {top: 8, left: 24}}
+        ])
+
+        store.channels_state[CENTER_VIEW_EVENT].current_boxs.push(f_box)
+        f_box.gadget.map(g => canvas.add(g))
         canvas.renderAll()
         break
       default:
@@ -247,76 +265,13 @@ function LoadBoxes(xml_id, scale) {
   var obj_count = 1
 
   for(var ob of xml.annotation.object) {
-    ob.uuid = parseInt(ob.uuid)
 
-    var left = ob.bndbox.xmin * scale
-    var top = ob.bndbox.ymin * scale
-    var right = ob.bndbox.xmax * scale
-    var bottom = ob.bndbox.ymax * scale
+    let fabric_box = util.XMLObj2Box(ob, canvas, scale)
+    fabric_box.box._uuid = fabric_box.box._uuid === 0 ? obj_count : fabric_box.box._uuid
 
-    let box = new fabric.Rect({
-      left: left,
-      top: top,
-      width: Math.abs(right - left),
-      height: Math.abs(bottom - top),
-      opacity: 0.7,
-      strokeWidth: 5,
-      stroke: 'rgba(129, 250, 92, 170)',
-      fill: 'rgba(0,0,0,0)',
-      selectable: true,
-      originX: 'left',
-      originY: 'top'
-    })
-
-    box._removed = false
-    box._uuid = ob.uuid !== undefined ? ob.uuid : obj_count
-    box._wrong_one = false
-    box._name = ob.name
-
-    if(ob.uuid !== undefined) {
-      if(ob.uuid < 0){
-        box.set({stroke: 'rgba(247, 162, 49, 170)'})
-        box._wrong_one = true
-      }
-    }
-
-    let wrong_btn = new fabric.Circle({
-      left: 0,
-      top: 0,
-      radius: 6,
-      strokeWidth: 0,
-      stroke: 'rgba(0,0,0,0)',
-      fill: 'rgba(247, 162, 49, 170)',
-      selectable: false,
-      originX: 'left',
-      originY: 'top'
-    })
-
-    let del_btn = new fabric.Circle({
-      left: 0,
-      top: 0,
-      radius: 6,
-      strokeWidth: 0,
-      stroke: 'rgba(0,0,0,0)',
-      fill: 'rgba(247, 49, 49, 170)',
-      selectable: false,
-      originX: 'left',
-      originY: 'top'
-    })
-
-    wrong_btn.on('mousedown', function(e) {
-      box._wrong_one = true
-      box.set({stroke: 'rgba(247, 162, 49, 170)'})
-      canvas.renderAll()
-    })
-
-    del_btn.on('mousedown', function(e) {
-      canvas.remove(box)
-      canvas.remove(del_btn)
-      canvas.remove(wrong_btn)
-      canvas.renderAll()
-      box._removed = true
-    })
+    let box = fabric_box.box
+    let wrong_btn = fabric_box.gadget[0]
+    let del_btn = fabric_box.gadget[1]
 
     canvas.add(box)
     canvas.add(wrong_btn)
@@ -406,6 +361,7 @@ $(window).load(() => {
 
         xmls_path.push(join_path)
         xmls_obj.push(null)  // preser position for xmlobj
+        xmls_obj_mod.push(null)  // preser position for xmlobj
 
         util.parsePOCXML(join_path).then((result) => {
           xmls_obj[id] = result

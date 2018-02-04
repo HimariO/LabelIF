@@ -118,6 +118,8 @@ function updateXML(boxs, img_scale, xml) {
       continue
 
     let uuid = box._wrong_one && box._uuid > 0 ? -box._uuid : box._uuid
+    uuid = !box._wrong_one && box._uuid < 0 ? -box._uuid : box._uuid
+
     let xml_obj_tag = {
       name: box._name,
       uuid: uuid,
@@ -139,7 +141,92 @@ function updateXML(boxs, img_scale, xml) {
 }
 
 
+function XMLObj2Box(xml_obj, canvas, scale, box) {
+  xml_obj.uuid = parseInt(xml_obj.uuid)
+
+  if(box === undefined) {
+    var left = xml_obj.bndbox.xmin * scale
+    var top = xml_obj.bndbox.ymin * scale
+    var right = xml_obj.bndbox.xmax * scale
+    var bottom = xml_obj.bndbox.ymax * scale
+
+    box = new fabric.Rect({
+      left: left,
+      top: top,
+      width: Math.abs(right - left),
+      height: Math.abs(bottom - top),
+      opacity: 0.7,
+      strokeWidth: 5,
+      stroke: 'rgba(129, 250, 92, 170)',
+      fill: 'rgba(0,0,0,0)',
+      selectable: true,
+      originX: 'left',
+      originY: 'top'
+    })
+  }
+
+  box._removed = false
+  box._uuid = xml_obj.uuid !== undefined ? xml_obj.uuid : 0
+  box._wrong_one = false
+  box._name = xml_obj.name
+
+  if(xml_obj.uuid !== undefined) {
+    if(xml_obj.uuid < 0){
+      box.set({stroke: 'rgba(247, 162, 49, 170)'})
+      box._wrong_one = true
+    }
+  }
+
+  let wrong_btn = new fabric.Circle({
+    left: 0,
+    top: 0,
+    radius: 6,
+    strokeWidth: 0,
+    stroke: 'rgba(0,0,0,0)',
+    fill: 'rgba(247, 162, 49, 170)',
+    selectable: false,
+    originX: 'left',
+    originY: 'top'
+  })
+
+  let del_btn = new fabric.Circle({
+    left: 0,
+    top: 0,
+    radius: 6,
+    strokeWidth: 0,
+    stroke: 'rgba(0,0,0,0)',
+    fill: 'rgba(247, 49, 49, 170)',
+    selectable: false,
+    originX: 'left',
+    originY: 'top'
+  })
+
+  wrong_btn.on('mousedown', function(e) {
+    if(box._wrong_one) {
+      box._wrong_one = false
+      box.set({stroke: 'rgba(129, 250, 92, 170)'})
+    }
+    else {
+      box._wrong_one = true
+      box.set({stroke: 'rgba(247, 162, 49, 170)'})
+    }
+    canvas.renderAll()
+  })
+
+  del_btn.on('mousedown', function(e) {
+    canvas.remove(box)
+    canvas.remove(del_btn)
+    canvas.remove(wrong_btn)
+    canvas.renderAll()
+    box._removed = true
+  })
+
+  return { box: box, gadget: [wrong_btn, del_btn] }
+}
+
+
 module.exports.parsePOCXML = parsePOCXML
 module.exports.writebackXML = writebackXML
 module.exports.bindObjects = bindObjects
 module.exports.updateXML = updateXML
+module.exports.XMLObj2Box = XMLObj2Box
