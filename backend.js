@@ -129,6 +129,29 @@ function ProcessSubmit(type, message) {
 store.Subscript(CENTER_VIEW_EVENT, ProcessSubmit)
 
 
+function TopBarEvent(type, message) {
+  if(type != 'TOP_BAR')
+    return
+
+  if(message.mode) {
+    store.channels_state[CENTER_VIEW_EVENT].operation_mode = message.mode
+  }
+
+  if(message.operation) {
+    switch (message.operation) {
+      case 'RESET':
+        $('#navbar-text').text('Label reset!')
+        break;
+      default:
+
+    }
+  }
+
+}
+
+store.Subscript(CENTER_VIEW_EVENT, TopBarEvent)
+
+
 /*----------------------------------------UI Action-------------------------------------------------*/
 
 
@@ -226,8 +249,8 @@ function InitCanvasDragDrop() {
 
 
 function InitCanvasSize() {
-  var parent = $('#center-view')
-  var h = $(window).height()
+  var parent = $('#center-canvas').parent()
+  var h = parent.height()
   var w = parent.width()
 
   canvas_dom.width = canvas_ctx.width = w
@@ -294,12 +317,20 @@ function LoadCanvas(src, img_id) {
 
   fabric.Image.fromURL(src, function(img) {
     var img_ratio = img.width / img.height
-    var target_height = canvas_ctx.height > canvas_ctx.width ? canvas_ctx.height : canvas_ctx.width * (1 / img_ratio)
-    var target_width = canvas_ctx.width > canvas_ctx.height ? canvas_ctx.width : canvas_ctx.height * img_ratio
-    var scale = target_width / img.width
 
+    var w_scale = canvas_ctx.width / img.width
+    var h_scale = canvas_ctx.height / img.height
+    var scale = Math.min(w_scale, h_scale)
+    var target_height = img.height * scale
+    var target_width = img.width * scale
+
+    // var target_height = canvas_ctx.height > canvas_ctx.width ? canvas_ctx.height : canvas_ctx.width * (1 / img_ratio)
+    // var target_width = canvas_ctx.width > canvas_ctx.height ? canvas_ctx.width : canvas_ctx.height * img_ratio
+    // var scale = target_width / img.width
+    console.log('target size:', target_width, target_height)
     img.set({width: target_width, height: target_height, originX: 'left', originY: 'top'})
     canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas))
+    $('#topbar-text').text(`[image] ${path.parse(src).base}`)
     LoadBoxes(img_id, scale)
   })
 
@@ -308,7 +339,7 @@ function LoadCanvas(src, img_id) {
 
 
 function AppendPreview(parent_selector, img_src, id) {
-  var img_html = $(`<img src="${img_src}" class="rounded auto-resize-width" style="margin: 5px;">`)
+  var img_html = $(`<img src="${img_src}" class="rounded auto-resize-width-90" style="margin: 5px;">`)
   var card_html = $(`
   <div class="preview-card border-top" id="preview-${id}">
     <p style="margin: 1px;">${id}</p>
@@ -381,7 +412,7 @@ $(document).keydown((event)=>{
 
 
 $('#id-input').keyup(function(event){
-  if(event.keyCode == 13){
+  if(event.keyCode == 13) {
     store.Send(CENTER_VIEW_EVENT, 'SUBMIT', {
       'input': $(this).val(),
       'img_id': store.channels_state[CENTER_VIEW_EVENT].current_img_id
@@ -389,4 +420,17 @@ $('#id-input').keyup(function(event){
     $(this).val('')
     store.Send(DOC_EVENT, 'KEY_PRESS', {'key_code': 40})
   }
+})
+
+
+$('#nav-select').click(function(e) {
+  store.Send(CENTER_VIEW_EVENT, 'TOP_BAR', {mode: 'VIEW'})
+})
+
+$('#nav-drawbox').click(function(e) {
+  store.Send(CENTER_VIEW_EVENT, 'TOP_BAR', {mode: 'DRAW_BOX'})
+})
+
+$('#nav-reset').click(function(e) {
+  store.Send(CENTER_VIEW_EVENT, 'TOP_BAR', {operation: 'RESET'})
 })

@@ -12,7 +12,11 @@ let mainWindow;
 
 function createWindow () {
   // Create the browser window.
-  mainWindow = new BrowserWindow({width: 1600, height: 1200});
+  var screen = electron.screen.getPrimaryDisplay()
+  mainWindow = new BrowserWindow({
+    width: parseInt(screen.size.width * 0.9),
+    height: parseInt(screen.size.height * 0.9)
+  })
   // and load the index.html of the app.
   mainWindow.loadURL('file://' + __dirname + '/index.html');
   // mainWindow.loadURL('https://www.google.com/');
@@ -21,7 +25,7 @@ function createWindow () {
     `)
 
   // Open the DevTools.
-  mainWindow.webContents.openDevTools();
+  mainWindow.webContents.openDevTools({mode:'undocked'});
 
   // Emitted when the window is closed.
   mainWindow.on('closed', function() {

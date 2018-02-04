@@ -6,11 +6,16 @@
     <link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-alpha.6/css/bootstrap.min.css'>
     <style media="screen">
       .auto-resize-width {
+        max-width: 100%;
+      }
+
+      .auto-resize-width-90 {
         max-width: 90%;
       }
 
       .auto-resize-height {
         max-height: 100vh;
+        height: 100vh;
       }
 
       .scroll-y {
@@ -34,7 +39,7 @@
       }
 
       .preview_hl {
-        border: 2px solid rgba(47,155,255,1);
+        border: 2px solid rgba(47,155,255,170);
         /* background: rgba(0, 120, 160, 160); */
         border-radius: 10px;
       }
@@ -49,6 +54,28 @@
       .input-block {
         margin: 10px;
       }
+
+      .no-padding {
+        padding: 0;
+      }
+
+      .grid-wrapper {
+        display: grid;
+        grid-gap: 0px;
+        /*grid-template-columns: 120px 120px 120px;*/
+        grid-template-rows: minmax(40px, 5%) auto;
+        grid-template-areas:
+          "header"
+          "content";
+      }
+
+      .grid-topbar {
+        grid-area: header;
+      }
+
+      .grid-content {
+        grid-area: content;
+      }
     </style>
   </head>
   <body>
@@ -60,7 +87,7 @@
 
         </div>
 
-        <div class="col-md-10 auto-resize-height" id="center-view">
+        <div class="col-md-10 auto-resize-height no-padding grid-wrapper" id="center-view">
 
           <!-- <div class="form-group row has-success input-block">
             <label for="id-input" class="col-sm-2 col-form-label">BoxIndex</label>
@@ -70,7 +97,32 @@
             </div>
           </div> -->
 
-          <canvas id="center-canvas" />
+          <nav class="navbar navbar-toggleable-md navbar-inverse bg-primary grid-topbar">
+            <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
+              <span class="navbar-toggler-icon"></span>
+            </button>
+            <a class="navbar-brand" href="#">LabelIF</a>
+            <div class="collapse navbar-collapse" id="navbarText">
+              <ul class="navbar-nav mr-auto">
+                <li class="nav-item">
+                  <a class="nav-link" id="nav-select">Select</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" id="nav-drawbox">DrawBox</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" id="nav-reset">Reset</a>
+                </li>
+              </ul>
+              <span class="navbar-text" id="topbar-text">
+                No image selected
+              </span>
+            </div>
+          </nav>
+
+          <section class="grid-content">
+            <canvas id="center-canvas" />
+          </section>
           <!-- <img src="" alt="" id="center-img" class="auto-resize-width"> -->
         </div>
 
