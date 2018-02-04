@@ -3,5 +3,7 @@ build
 *.zip
 img
 dataset
+dataset_
+dataset__
 *.xml
 *.jpg

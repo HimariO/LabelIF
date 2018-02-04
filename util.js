@@ -1,6 +1,7 @@
 const Promise = require("bluebird")
 const xml2js = Promise.promisifyAll(require('xml2js'))
 const fs = Promise.promisifyAll(require('fs'))
+const path = require('path')
 // console.dir(util)
 
 var builder = new xml2js.Builder()
@@ -118,7 +119,8 @@ function updateXML(boxs, img_scale, xml) {
       continue
 
     let uuid = box._wrong_one && box._uuid > 0 ? -box._uuid : box._uuid
-    uuid = !box._wrong_one && box._uuid < 0 ? -box._uuid : box._uuid
+    // uuid = (!box._wrong_one) && box._uuid < 0 ? -box._uuid : uuid
+    console.log(box._uuid, uuid, box._wrong_one, box._wrong_one && box._uuid > 0)
 
     let xml_obj_tag = {
       name: box._name,
@@ -225,8 +227,93 @@ function XMLObj2Box(xml_obj, canvas, scale, box) {
 }
 
 
+function export_by_uuid(xmls_obj, imgs_path, output_path) {
+  fse.ensureDirSync(output_path)
+
+  try {
+    fs.accessSync(output_path, fs.constants.R_OK | fs.constants.W_OK)
+
+    for (var i = 0; i < imgs_path.length; i++) {
+      let xml = xmls_obj[i]
+
+      if(xml.annotation.object === undefined)
+        continue
+
+      for(var ob of xml.annotation.object) {
+        console.log(ob.uuid)
+        ob.uuid = parseInt(ob.uuid)
+        let copy_path = ob.uuid > 0 ? path.join(output_path, 'normal_one', `${ob.uuid - 1}`) : path.join(output_path, 'wrong_one', `${Math.abs(ob.uuid) - 1}`)
+
+        fse.ensureDirSync(copy_path)
+        fse.copy(
+          imgs_path[i],
+          path.join(copy_path, path.parse(imgs_path[i]).base)
+        )
+
+        // console.log(
+        //   imgs_path[i],
+        //   path.join(copy_path, path.parse(imgs_path[i]).base)
+        // )
+      }
+    }
+
+    return true
+  } catch (err) {
+    return false
+  }
+
+}
+
+
+function CheckInputPath(in_path) {
+  var files = fs.readdirSync(in_path)
+  var hasAnno = false
+  var hasJPG = false
+  var pathAnno = ''
+  var pathJPG = ''
+
+  for(var f of files) {
+    let stat = fs.statSync(path.join(in_path, f))
+
+    if(f.toLowerCase().includes('annotation') && stat.isDirectory()) {
+      pathAnno = path.join(in_path, f)
+      hasAnno = true
+    }
+    else if(f.toLowerCase().includes('jpegimage') && stat.isDirectory()) {
+      pathJPG = path.join(in_path, f)
+      hasJPG = true
+    }
+  }
+
+  if(hasJPG && hasAnno) {
+    var xmls = fs.readdirSync(pathAnno).filter(f => f.includes('.xml'))
+    var jpgs = fs.readdirSync(pathJPG).filter(f => f.includes('.jpg'))
+
+    if(xmls.length != jpgs.length) {
+      return false
+    }
+    else {
+      xmls = xmls.map(f => f.replace('.xml', ''))
+      jpgs = jpgs.map(f => f.replace('.jpg', ''))
+
+      var compare = xmls.filter((f, i) => f == jpgs[i])
+
+      if(compare.length > 0)
+        return true
+      else
+        return false
+    }
+  }
+  else {
+    return false
+  }
+}
+
+
 module.exports.parsePOCXML = parsePOCXML
 module.exports.writebackXML = writebackXML
 module.exports.bindObjects = bindObjects
 module.exports.updateXML = updateXML
 module.exports.XMLObj2Box = XMLObj2Box
+module.exports.export_by_uuid = export_by_uuid
+module.exports.CheckInputPath = CheckInputPath

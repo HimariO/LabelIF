@@ -4,6 +4,7 @@ const path = require('path')
 const util = require('./util')
 const Store = require('./store')
 
+root_path = ''
 imgs_path = []
 xmls_path = []
 xmls_obj = []
@@ -25,6 +26,7 @@ const DOC_EVENT = 'DOC_EVENT'
 store.AddChannel(PREVIEW_EVENT, {})
 store.AddChannel(CENTER_VIEW_EVENT, {
   current_img_id: 0,
+  current_img_scale: 1,
   current_boxs: [],
   current_xml: undefined,
   operation_mode: 'VIEW',
@@ -135,12 +137,24 @@ function TopBarEvent(type, message) {
 
   if(message.mode) {
     store.channels_state[CENTER_VIEW_EVENT].operation_mode = message.mode
+    switch (message.mode) {
+      case 'VIEW':
+        canvas.setCursor('default')
+        break;
+
+      case 'DRAW_BOX':
+        canvas.setCursor('crosshair')
+        break;
+
+      default:
+        canvas.setCursor('default')
+    }
   }
 
   if(message.operation) {
     switch (message.operation) {
       case 'RESET':
-        $('#navbar-text').text('Label reset!')
+        $('#topbar-text').text('Label reset!')
         break;
       default:
 
@@ -265,16 +279,17 @@ function LoadBoxes(xml_id, scale) {
 
   if(store.channels_state[CENTER_VIEW_EVENT].current_xml !== undefined) {
     var old_id = xmls_obj.indexOf(store.channels_state[CENTER_VIEW_EVENT].current_xml)
-    var u_xml = util.updateXML(
+    xmls_obj[old_id] = util.updateXML(
       store.channels_state[CENTER_VIEW_EVENT].current_boxs,
-      scale,
+      store.channels_state[CENTER_VIEW_EVENT].current_img_scale,
       store.channels_state[CENTER_VIEW_EVENT].current_xml
     )
-    util.writebackXML(u_xml, xmls_path[old_id])
+    util.writebackXML(xmls_obj[old_id], xmls_path[old_id])
   }
 
   var xml = xmls_obj[xml_id]
   store.channels_state[CENTER_VIEW_EVENT].current_xml = xml
+  store.channels_state[CENTER_VIEW_EVENT].current_img_scale = scale
   console.dir(xml)
 
   for(var old_box of store.channels_state[CENTER_VIEW_EVENT].current_boxs) {
@@ -316,13 +331,13 @@ function LoadBoxes(xml_id, scale) {
 function LoadCanvas(src, img_id) {
 
   fabric.Image.fromURL(src, function(img) {
-    var img_ratio = img.width / img.height
+    let img_ratio = img.width / img.height
 
-    var w_scale = canvas_ctx.width / img.width
-    var h_scale = canvas_ctx.height / img.height
-    var scale = Math.min(w_scale, h_scale)
-    var target_height = img.height * scale
-    var target_width = img.width * scale
+    let w_scale = canvas_ctx.width / img.width
+    let h_scale = canvas_ctx.height / img.height
+    let scale = Math.min(w_scale, h_scale)
+    let target_height = img.height * scale
+    let target_width = img.width * scale
 
     // var target_height = canvas_ctx.height > canvas_ctx.width ? canvas_ctx.height : canvas_ctx.width * (1 / img_ratio)
     // var target_width = canvas_ctx.width > canvas_ctx.height ? canvas_ctx.width : canvas_ctx.height * img_ratio
@@ -362,19 +377,23 @@ function AppendPreview(parent_selector, img_src, id) {
 }
 
 
-$(window).load(() => {
+function load_data(root_p) {
+  root_path = root_p
+  $('#upload-section').css('display', 'none')
+  $('#canvas-wrapper').css('display', 'block')
+
   InitCanvasSize()
   canvas = new fabric.Canvas(canvas_dom)
   InitCanvasDragDrop()
 
-  var img_root = 'dataset/JPEGImages'
-  var xml_root = 'dataset/Annotations'
+  var img_root = path.join(root_p, 'JPEGImages')
+  var xml_root = path.join(root_p, 'Annotations')
 
   fs.readdir(img_root, (err, files) => {
     var count = 0
     for(var f of files){
       if(f.includes('.jpg') || f.includes('.png')){
-        var join_path = path.join(__dirname, img_root, f)
+        var join_path = path.join(img_root, f)
         AppendPreview('#preview', join_path, count)
         imgs_path.push(join_path)
         count++
@@ -387,7 +406,7 @@ $(window).load(() => {
 
     for(var f of files){
       if(f.includes('.xml')){
-        var join_path = path.join(__dirname, xml_root, f)
+        var join_path = path.join(xml_root, f)
         let id = count  // make sure id not changed when xml finish parsing.
 
         xmls_path.push(join_path)
@@ -401,7 +420,7 @@ $(window).load(() => {
       }
     }
   })
-})
+}
 
 
 $(document).keydown((event)=>{
@@ -433,4 +452,21 @@ $('#nav-drawbox').click(function(e) {
 
 $('#nav-reset').click(function(e) {
   store.Send(CENTER_VIEW_EVENT, 'TOP_BAR', {operation: 'RESET'})
+})
+
+$('#nav-export').click(function(e) {
+  $('#icon-loading').css('display', 'inline-block')
+  let res = util.export_by_uuid(xmls_obj, imgs_path, path.join(root_path, 'Export'))
+  console.log('nav-export: ', res)
+
+  if(res)
+    $('#topbar-text').text('Dataset successfully exported!')
+  else
+    $('#topbar-text').text('Dataset fail to export!')
+
+  $('#icon-loading').css('display', 'none')
+})
+
+$(window).load(() => {
+  ekUpload(load_data)
 })

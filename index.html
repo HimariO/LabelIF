@@ -3,80 +3,10 @@
   <head>
     <meta charset="UTF-8">
     <title>Hello World!</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css">
     <link rel='stylesheet prefetch' href='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-alpha.6/css/bootstrap.min.css'>
-    <style media="screen">
-      .auto-resize-width {
-        max-width: 100%;
-      }
-
-      .auto-resize-width-90 {
-        max-width: 90%;
-      }
-
-      .auto-resize-height {
-        max-height: 100vh;
-        height: 100vh;
-      }
-
-      .scroll-y {
-        overflow-y: scroll;
-      }
-
-      .img_margin {
-        margin: 5px;
-      }
-
-      #preview {
-        background: #dee2e6;
-      }
-
-      #center-vier {
-        box-shadow: 0 5px 10px rgba(0, 0, 0, 0.6), 0 3px 5px rgba(0, 0, 0, 0.35);
-      }
-
-      .border-top {
-        border-top: 1px solid #ffffff;
-      }
-
-      .preview_hl {
-        border: 2px solid rgba(47,155,255,170);
-        /* background: rgba(0, 120, 160, 160); */
-        border-radius: 10px;
-      }
-
-      .preview-card {
-        /* float: left; */
-        /*overflow: hidden;*/
-        margin-bottom: 5px;
-        display: block;
-      }
-
-      .input-block {
-        margin: 10px;
-      }
-
-      .no-padding {
-        padding: 0;
-      }
-
-      .grid-wrapper {
-        display: grid;
-        grid-gap: 0px;
-        /*grid-template-columns: 120px 120px 120px;*/
-        grid-template-rows: minmax(40px, 5%) auto;
-        grid-template-areas:
-          "header"
-          "content";
-      }
-
-      .grid-topbar {
-        grid-area: header;
-      }
-
-      .grid-content {
-        grid-area: content;
-      }
-    </style>
+    <link rel="stylesheet" href="css/style.css">
+    
   </head>
   <body>
 
@@ -113,15 +43,41 @@
                 <li class="nav-item">
                   <a class="nav-link" id="nav-reset">Reset</a>
                 </li>
+                <li class="nav-item">
+                  <a class="nav-link" id="nav-export">Export</a>
+                </li>
               </ul>
               <span class="navbar-text" id="topbar-text">
+                <i id="icon-loading" class="fa fa-refresh fa-spin" aria-hidden="true" style="display: none;"></i>
                 No image selected
               </span>
             </div>
           </nav>
 
-          <section class="grid-content">
+          <section class="grid-content" id="canvas-wrapper" style="display: none;">
             <canvas id="center-canvas" />
+          </section>
+
+          <section class="grid-content" id="upload-section">
+            <form id="file-upload-form" class="uploader">
+              <input id="file-upload" type="file" name="fileUpload" webkitdirectory mozdirectory msdirectory odirectory directory multiple />
+
+              <label for="file-upload" id="file-drag">
+                <img id="file-image" src="#" alt="Preview" class="hidden">
+                <div id="start">
+                  <i class="fa fa-download" aria-hidden="true"></i>
+                  <div>Select a file or drag here</div>
+                  <div id="notimage" class="hidden">This folder don't contain dataset match the format!</div>
+                  <span id="file-upload-btn" class="btn btn-primary">Select a file</span>
+                </div>
+                <div id="response" class="hidden">
+                  <div id="messages"></div>
+                  <progress class="progress" id="file-progress" value="0">
+                    <span>0</span>%
+                  </progress>
+                </div>
+              </label>
+            </form>
           </section>
           <!-- <img src="" alt="" id="center-img" class="auto-resize-width"> -->
         </div>
@@ -135,4 +91,5 @@
   <script src="./lib/fabric.min.js"></script>
   <script src='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-alpha.6/js/bootstrap.min.js'></script>
   <script src="./backend.js"></script>
+  <script  src="js/index.js"></script>
 </html>
