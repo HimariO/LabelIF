@@ -315,7 +315,14 @@ function LoadBoxes(xml_id, scale) {
   var max_uuid = 0
 
   if(xml.annotation.object != undefined) {
-    for(var ob of xml.annotation.object) {
+    let object_list = undefined
+
+    if(xml.annotation.object.length === undefined)
+      object_list = [xml.annotation.object]
+    else
+      object_list = xml.annotation.object
+
+    for(var ob of object_list) {
 
       let fabric_box = util.XMLObj2Box(ob, canvas, scale)
       fabric_box.box._uuid = fabric_box.box._uuid === 0 ? obj_count : fabric_box.box._uuid
