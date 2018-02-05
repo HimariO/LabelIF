@@ -207,10 +207,12 @@ function XMLObj2Box(xml_obj, canvas, scale, box) {
     if(box._wrong_one) {
       box._wrong_one = false
       box.set({stroke: 'rgba(129, 250, 92, 170)'})
+      canvas.add(del_btn)
     }
     else {
       box._wrong_one = true
       box.set({stroke: 'rgba(247, 162, 49, 170)'})
+      canvas.remove(del_btn)
     }
     canvas.renderAll()
   })

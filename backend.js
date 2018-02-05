@@ -60,7 +60,7 @@ function SelectByKey(type, message) {
     break
 
     case 40: // down
-    var new_id = c_id < imgs_path.length ? c_id + 1 : c_id
+    var new_id = c_id < imgs_path.length - 1 ? c_id + 1 : c_id
     store.channels_state[CENTER_VIEW_EVENT].current_img_id = new_id
     store.Send(CENTER_VIEW_EVENT, 'KEY_PRESS', {'img_id': new_id})
     break
@@ -74,10 +74,12 @@ function SelectByKey(type, message) {
     /* Select Operation Mode By Key */
     case 27: // Esc
     store.channels_state[CENTER_VIEW_EVENT].operation_mode = 'VIEW'
+    canvas.defaultCursor = 'default'
     break
 
     case 77: // M
     store.channels_state[CENTER_VIEW_EVENT].operation_mode = 'DRAW_BOX'
+    canvas.defaultCursor = 'crosshair'
     break
   }
 }
@@ -139,15 +141,21 @@ function TopBarEvent(type, message) {
     store.channels_state[CENTER_VIEW_EVENT].operation_mode = message.mode
     switch (message.mode) {
       case 'VIEW':
-        canvas.setCursor('default')
+        // $(canvas_dom).css('cursor', 'default')
+        // canvas.setCursor('default')
+        canvas.defaultCursor = 'default'
         break;
 
       case 'DRAW_BOX':
-        canvas.setCursor('crosshair')
+        // $(canvas_dom).css('cursor', 'crosshair')
+        // canvas.setCursor('crosshair')
+        canvas.defaultCursor = 'crosshair'
         break;
 
       default:
-        canvas.setCursor('default')
+        // $(canvas_dom).css('cursor', 'default')
+        // canvas.setCursor('default')
+        canvas.defaultCursor = 'default'
     }
   }
 
@@ -245,6 +253,8 @@ function InitCanvasDragDrop() {
         )
 
         box.setCoords()
+        box._uuid = store.channels_state[CENTER_VIEW_EVENT].max_uuid + 1
+        store.channels_state[CENTER_VIEW_EVENT].max_uuid++
 
         util.bindObjects(canvas, box, [
           {f_object: f_box.gadget[0], align: 'TOP_LEFT', offset: {top: 8}},
@@ -253,6 +263,7 @@ function InitCanvasDragDrop() {
 
         store.channels_state[CENTER_VIEW_EVENT].current_boxs.push(f_box)
         f_box.gadget.map(g => canvas.add(g))
+        f_box.gadget.map(g => g.setCoords())
         canvas.renderAll()
         break
       default:
@@ -301,29 +312,35 @@ function LoadBoxes(xml_id, scale) {
 
   store.channels_state[CENTER_VIEW_EVENT].current_boxs = []
   var obj_count = 1
+  var max_uuid = 0
 
-  for(var ob of xml.annotation.object) {
+  if(xml.annotation.object != undefined) {
+    for(var ob of xml.annotation.object) {
 
-    let fabric_box = util.XMLObj2Box(ob, canvas, scale)
-    fabric_box.box._uuid = fabric_box.box._uuid === 0 ? obj_count : fabric_box.box._uuid
+      let fabric_box = util.XMLObj2Box(ob, canvas, scale)
+      fabric_box.box._uuid = fabric_box.box._uuid === 0 ? obj_count : fabric_box.box._uuid
 
-    let box = fabric_box.box
-    let wrong_btn = fabric_box.gadget[0]
-    let del_btn = fabric_box.gadget[1]
+      let box = fabric_box.box
+      let wrong_btn = fabric_box.gadget[0]
+      let del_btn = fabric_box.gadget[1]
 
-    canvas.add(box)
-    canvas.add(wrong_btn)
-    canvas.add(del_btn)
+      canvas.add(box)
+      canvas.add(wrong_btn)
+      if(!box._wrong_one)
+        canvas.add(del_btn)
 
-    util.bindObjects(canvas, box, [
-      {f_object: wrong_btn, align: 'TOP_LEFT', offset: {top: 8}},
-      {f_object: del_btn, align: 'TOP_LEFT', offset: {top: 8, left: 24}}
-    ])
+      util.bindObjects(canvas, box, [
+        {f_object: wrong_btn, align: 'TOP_LEFT', offset: {top: 8}},
+        {f_object: del_btn, align: 'TOP_LEFT', offset: {top: 8, left: 24}}
+      ])
 
-    store.channels_state[CENTER_VIEW_EVENT].current_boxs.push({box: box, gadget: [wrong_btn, del_btn]})
-    obj_count++
+      store.channels_state[CENTER_VIEW_EVENT].current_boxs.push({box: box, gadget: [wrong_btn, del_btn]})
+      obj_count++
+      max_uuid = box._uuid > max_uuid ? box._uuid : max_uuid
+    }
   }
 
+  store.channels_state[CENTER_VIEW_EVENT].max_uuid = max_uuid
   canvas.renderAll()
 }
 
