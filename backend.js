@@ -163,6 +163,12 @@ function TopBarEvent(type, message) {
     switch (message.operation) {
       case 'RESET':
         $('#topbar-text').text('Label reset!')
+        xmls_obj_mod[store.channels_state[CENTER_VIEW_EVENT].current_img_id] = null
+        LoadBoxes(
+          store.channels_state[CENTER_VIEW_EVENT].current_img_id,
+          store.channels_state[CENTER_VIEW_EVENT].current_img_scale,
+          false
+        )
         break;
       default:
 
@@ -286,19 +292,24 @@ function InitCanvasSize() {
 }
 
 
-function LoadBoxes(xml_id, scale) {
+function LoadBoxes(xml_id, scale, writeback=true) {
+  // search xml obj in both list,
+  var old_id = xmls_obj.indexOf(store.channels_state[CENTER_VIEW_EVENT].current_xml)
+  old_id = old_id == -1 ? xmls_obj_mod.indexOf(store.channels_state[CENTER_VIEW_EVENT].current_xml) : old_id
 
-  if(store.channels_state[CENTER_VIEW_EVENT].current_xml !== undefined) {
-    var old_id = xmls_obj.indexOf(store.channels_state[CENTER_VIEW_EVENT].current_xml)
-    xmls_obj[old_id] = util.updateXML(
+  // writeback with current_id == xml_id, will cause xml_mod[old_id] == null, and later old_id will always be -1.
+  if((store.channels_state[CENTER_VIEW_EVENT].current_xml !== undefined && old_id != xml_id) && writeback) {
+    var xml_copy = $.extend(true, {}, store.channels_state[CENTER_VIEW_EVENT].current_xml)  // prevent modifi orginal xml obj
+
+    xmls_obj_mod[old_id] = util.updateXML(
       store.channels_state[CENTER_VIEW_EVENT].current_boxs,
       store.channels_state[CENTER_VIEW_EVENT].current_img_scale,
-      store.channels_state[CENTER_VIEW_EVENT].current_xml
+      xml_copy
     )
-    util.writebackXML(xmls_obj[old_id], xmls_path[old_id])
+    util.writebackXML(xmls_obj_mod[old_id], xmls_path[old_id])
   }
 
-  var xml = xmls_obj[xml_id]
+  var xml = xmls_obj_mod[xml_id] === null ? xmls_obj[xml_id] : xmls_obj_mod[xml_id]
   store.channels_state[CENTER_VIEW_EVENT].current_xml = xml
   store.channels_state[CENTER_VIEW_EVENT].current_img_scale = scale
   console.dir(xml)

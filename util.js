@@ -252,10 +252,6 @@ function export_by_uuid(xmls_obj, imgs_path, output_path) {
           path.join(copy_path, path.parse(imgs_path[i]).base)
         )
 
-        // console.log(
-        //   imgs_path[i],
-        //   path.join(copy_path, path.parse(imgs_path[i]).base)
-        // )
       }
     }
 
