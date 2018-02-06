@@ -144,7 +144,6 @@ function updateXML(boxs, img_scale, xml) {
 
 
 function XMLObj2Box(xml_obj, canvas, scale, box) {
-  xml_obj.uuid = parseInt(xml_obj.uuid)
 
   if(box === undefined) {
     var left = xml_obj.bndbox.xmin * scale
@@ -168,7 +167,7 @@ function XMLObj2Box(xml_obj, canvas, scale, box) {
   }
 
   box._removed = false
-  box._uuid = xml_obj.uuid !== undefined ? xml_obj.uuid : 0
+  box._uuid = xml_obj.uuid !== undefined ?  parseInt(xml_obj.uuid) : 0
   box._wrong_one = false
   box._name = xml_obj.name
 
@@ -257,6 +256,7 @@ function export_by_uuid(xmls_obj, imgs_path, output_path) {
 
     return true
   } catch (err) {
+    console.log(err)
     return false
   }
 
