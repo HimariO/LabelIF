@@ -98,13 +98,21 @@ function bindObjects(canvas, anchor, object_list) {
       ob.f_object.set(option)
       ob.f_object.setCoords()
     }
-
     // canvas.renderAll()
+  }
+
+
+  function go2front(event) {
+    for(var ob of object_list) {
+      ob.f_object.bringToFront()
+      ob.f_object.setCoords()
+    }
   }
 
   anchor.on('moving', (e) => follow_anchor(e))
   anchor.on('scaling', (e) => follow_anchor(e))
   anchor.on('rotating', (e) => follow_anchor(e))
+  anchor.on('selected', (e) => go2front(e))
 
   follow_anchor({}) // init gadget position
 }
@@ -240,7 +248,8 @@ function export_by_uuid(xmls_obj, imgs_path, output_path) {
       if(xml.annotation.object === undefined)
         continue
 
-      for(var ob of xml.annotation.object) {
+      let xml_list = xml.annotation.object.length != undefined ? xml.annotation.object : [xml.annotation.object]
+      for(var ob of xml_list) {
         console.log(ob.uuid)
         ob.uuid = parseInt(ob.uuid)
         let copy_path = ob.uuid > 0 ? path.join(output_path, 'normal_one', `${ob.uuid - 1}`) : path.join(output_path, 'wrong_one', `${Math.abs(ob.uuid) - 1}`)
