@@ -5,7 +5,7 @@
   "main": "main.js",
   "scripts": {
     "start": "electron main.js",
-    "build": "electron-packager . LabelIF --out build",
+    "build_linux": "electron-packager . LabelIF --out build --platform linux ",
     "build_win": "electron-packager . LabelIF --out build --platform win32 ",
     "build_mac": "electron-packager . LabelIF --out build --platform darwin "
   },

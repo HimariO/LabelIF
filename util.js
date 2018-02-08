@@ -103,6 +103,9 @@ function bindObjects(canvas, anchor, object_list) {
 
 
   function go2front(event) {
+    anchor.bringToFront()
+    anchor.setCoords()
+    
     for(var ob of object_list) {
       ob.f_object.bringToFront()
       ob.f_object.setCoords()

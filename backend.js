@@ -53,12 +53,14 @@ function SelectByKey(type, message) {
 
   switch(message.key_code) {
     /* Select Image By Key */
+    case 29: // tab
     case 38: // up
     var new_id = c_id > 0 ? c_id - 1 : c_id
     store.channels_state[CENTER_VIEW_EVENT].current_img_id = new_id
     store.Send(CENTER_VIEW_EVENT, 'KEY_PRESS', {'img_id': new_id})
     break
 
+    case 32: // space
     case 40: // down
     var new_id = c_id < imgs_path.length - 1 ? c_id + 1 : c_id
     store.channels_state[CENTER_VIEW_EVENT].current_img_id = new_id
@@ -73,13 +75,16 @@ function SelectByKey(type, message) {
 
     /* Select Operation Mode By Key */
     case 27: // Esc
+    case 86: // V
     store.channels_state[CENTER_VIEW_EVENT].operation_mode = 'VIEW'
     canvas.defaultCursor = 'default'
+    canvas.selection = true
     break
 
     case 77: // M
     store.channels_state[CENTER_VIEW_EVENT].operation_mode = 'DRAW_BOX'
     canvas.defaultCursor = 'crosshair'
+    canvas.selection = false
     break
   }
 }
@@ -144,18 +149,21 @@ function TopBarEvent(type, message) {
         // $(canvas_dom).css('cursor', 'default')
         // canvas.setCursor('default')
         canvas.defaultCursor = 'default'
+        canvas.selection = true
         break;
 
       case 'DRAW_BOX':
         // $(canvas_dom).css('cursor', 'crosshair')
         // canvas.setCursor('crosshair')
         canvas.defaultCursor = 'crosshair'
+        canvas.selection = false
         break;
 
       default:
         // $(canvas_dom).css('cursor', 'default')
         // canvas.setCursor('default')
         canvas.defaultCursor = 'default'
+        canvas.selection = true
     }
   }
 
@@ -298,7 +306,7 @@ function LoadBoxes(xml_id, scale, writeback=true) {
   old_id = old_id == -1 ? xmls_obj_mod.indexOf(store.channels_state[CENTER_VIEW_EVENT].current_xml) : old_id
 
   // writeback with current_id == xml_id, will cause xml_mod[old_id] == null, and later old_id will always be -1.
-  if((store.channels_state[CENTER_VIEW_EVENT].current_xml !== undefined && old_id != xml_id) && writeback) {
+  if(store.channels_state[CENTER_VIEW_EVENT].current_xml !== undefined && writeback) {
     var xml_copy = $.extend(true, {}, store.channels_state[CENTER_VIEW_EVENT].current_xml)  // prevent modifi orginal xml obj
 
     xmls_obj_mod[old_id] = util.updateXML(
