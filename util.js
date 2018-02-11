@@ -338,4 +338,4 @@ module.exports.updateXML = updateXML
 module.exports.XMLObj2Box = XMLObj2Box
 module.exports.export_by_uuid = export_by_uuid
 module.exports.CheckInputPath = CheckInputPath
-module.exports.setBoxTransparent = setBoxTransparent
+module.exports.setAllBox = setAllBox

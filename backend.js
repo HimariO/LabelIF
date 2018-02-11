@@ -193,6 +193,7 @@ store.Subscript(CENTER_VIEW_EVENT, TopBarEvent)
 
 function InitCanvasDragDrop() {
   var box, isDown, origX, origY;
+  var move_onece = false;
 
   canvas.on('mouse:down', function(o){
     isDown = true
@@ -245,14 +246,32 @@ function InitCanvasDragDrop() {
         })
 
         canvas.renderAll()
-        break;
+        break
+
+      case 'VIEW':
+        if(move_onece) break
+        let trigger_obj = canvas.findTarget(o.e)
+
+        util.setAllBox(
+          canvas,
+          store.channels_state[CENTER_VIEW_EVENT].current_boxs,
+          { opacity: 0.2 }
+        )
+        trigger_obj.set( {opacity: 0.7} )
+
+        canvas.renderAll()
+        break
+
       default:
         // console.log('Canvas got click!')
     }
+
+    move_onece = true
   })
 
   canvas.on('mouse:up', function(o){
     isDown = false
+    move_onece = false
 
     switch (store.channels_state[CENTER_VIEW_EVENT].operation_mode) {
       case 'DRAW_BOX':
@@ -290,6 +309,15 @@ function InitCanvasDragDrop() {
           { opacity: 0.7 }
         )
         break
+
+      case 'VIEW':
+        util.setAllBox(
+          canvas,
+          store.channels_state[CENTER_VIEW_EVENT].current_boxs,
+          { opacity: 0.7 }
+        )
+        break
+
       default:
         // console.log('Canvas got click!')
     }
