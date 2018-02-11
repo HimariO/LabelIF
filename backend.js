@@ -217,7 +217,11 @@ function InitCanvasDragDrop() {
         })
 
         canvas.add(box)
-
+        util.setAllBox(
+          canvas,
+          store.channels_state[CENTER_VIEW_EVENT].current_boxs,
+          { opacity: 0.2 }
+        )
         break;
       default:
         console.log('Canvas got click!')
@@ -253,7 +257,7 @@ function InitCanvasDragDrop() {
     switch (store.channels_state[CENTER_VIEW_EVENT].operation_mode) {
       case 'DRAW_BOX':
         box.set({
-          stroke: 'rgb(129, 250, 92)',
+          stroke: 'rgba(129, 250, 92, 170)',
         })
 
         f_box = util.XMLObj2Box(
@@ -279,6 +283,12 @@ function InitCanvasDragDrop() {
         f_box.gadget.map(g => canvas.add(g))
         f_box.gadget.map(g => g.setCoords())
         canvas.renderAll()
+
+        util.setAllBox(
+          canvas,
+          store.channels_state[CENTER_VIEW_EVENT].current_boxs,
+          { opacity: 0.7 }
+        )
         break
       default:
         // console.log('Canvas got click!')
@@ -499,6 +509,7 @@ $('#nav-reset').click(function(e) {
 
 $('#nav-export').click(function(e) {
   $('#icon-loading').css('display', 'inline-block')
+  $('#topbar-text').text('Exporting dataset...')
   let copy_promise = util.export_by_uuid(xmls_obj, imgs_path, path.join(root_path, 'Export'))
 
   if(typeof copy_promise == "boolean") {
@@ -507,7 +518,7 @@ $('#nav-export').click(function(e) {
     $('#icon-loading').css('display', 'none')
   }
   else {
-    copy_promise.then(() => {
+    Promise.all(copy_promise).then(() => {
       $('#topbar-text').text('Dataset successfully exported!')
       $('#icon-loading').css('display', 'none')
     }).catch((err) => {

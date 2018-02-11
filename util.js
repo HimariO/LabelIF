@@ -21,9 +21,11 @@ function writebackXML(xml_obj, path) {
 }
 
 
-function setBoxTransparent(canvas, box_list, alpha) {
+function setAllBox(canvas, box_list, option) {
   for (var box_ob of box_list) {
-    box_ob.box.set({stroke: `rgba(129, 250, 92, ${alpha})`})
+    box_ob.box.set(option)
+    box_ob.box.setCoords()
+    box_ob.gadget.map(g => g.set(option))
   }
   canvas.renderAll()
 }
@@ -262,8 +264,8 @@ function export_by_uuid(xmls_obj, imgs_path, output_path) {
 
       let xml_list = xml.annotation.object.length != undefined ? xml.annotation.object : [xml.annotation.object]
       for(var ob of xml_list) {
-        console.log(ob.uuid)
-        ob.uuid = parseInt(ob.uuid)
+        console.log('export id:', ob.uuid)
+        ob.uuid = ob.uuid !== undefined && !isNaN(ob.uuid) ? parseInt(ob.uuid) : 1
         let copy_path = ob.uuid > 0 ? path.join(output_path, 'normal_one', `${ob.uuid - 1}`) : path.join(output_path, 'wrong_one', `${Math.abs(ob.uuid) - 1}`)
 
         fse.ensureDirSync(copy_path)
@@ -336,3 +338,4 @@ module.exports.updateXML = updateXML
 module.exports.XMLObj2Box = XMLObj2Box
 module.exports.export_by_uuid = export_by_uuid
 module.exports.CheckInputPath = CheckInputPath
+module.exports.setBoxTransparent = setBoxTransparent
