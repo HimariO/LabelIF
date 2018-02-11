@@ -21,6 +21,14 @@ function writebackXML(xml_obj, path) {
 }
 
 
+function setBoxTransparent(canvas, box_list, alpha) {
+  for (var box_ob of box_list) {
+    box_ob.box.set({stroke: `rgba(129, 250, 92, ${alpha})`})
+  }
+  canvas.renderAll()
+}
+
+
 function bindObjects(canvas, anchor, object_list) {
 
   function get_coords(ob, align) {
@@ -105,7 +113,7 @@ function bindObjects(canvas, anchor, object_list) {
   function go2front(event) {
     anchor.bringToFront()
     anchor.setCoords()
-    
+
     for(var ob of object_list) {
       ob.f_object.bringToFront()
       ob.f_object.setCoords()
