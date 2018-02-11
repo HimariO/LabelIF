@@ -499,15 +499,25 @@ $('#nav-reset').click(function(e) {
 
 $('#nav-export').click(function(e) {
   $('#icon-loading').css('display', 'inline-block')
-  let res = util.export_by_uuid(xmls_obj, imgs_path, path.join(root_path, 'Export'))
-  console.log('nav-export: ', res)
+  let copy_promise = util.export_by_uuid(xmls_obj, imgs_path, path.join(root_path, 'Export'))
 
-  if(res)
-    $('#topbar-text').text('Dataset successfully exported!')
-  else
+  if(typeof copy_promise == "boolean") {
+    console.log('nav-export: ', res)
     $('#topbar-text').text('Dataset fail to export!')
+    $('#icon-loading').css('display', 'none')
+  }
+  else {
+    copy_promise.then(() => {
+      $('#topbar-text').text('Dataset successfully exported!')
+      $('#icon-loading').css('display', 'none')
+    }).catch((err) => {
+      $('#topbar-text').text('Dataset fail to export!')
+      console.error(err)
+      $('#icon-loading').css('display', 'none')
+    })
+  }
 
-  $('#icon-loading').css('display', 'none')
+
 })
 
 $(window).load(() => {

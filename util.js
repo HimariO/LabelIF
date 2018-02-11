@@ -105,7 +105,7 @@ function bindObjects(canvas, anchor, object_list) {
   function go2front(event) {
     anchor.bringToFront()
     anchor.setCoords()
-    
+
     for(var ob of object_list) {
       ob.f_object.bringToFront()
       ob.f_object.setCoords()
@@ -244,6 +244,7 @@ function export_by_uuid(xmls_obj, imgs_path, output_path) {
 
   try {
     fs.accessSync(output_path, fs.constants.R_OK | fs.constants.W_OK)
+    var copy_promise = []
 
     for (var i = 0; i < imgs_path.length; i++) {
       let xml = xmls_obj[i]
@@ -258,15 +259,15 @@ function export_by_uuid(xmls_obj, imgs_path, output_path) {
         let copy_path = ob.uuid > 0 ? path.join(output_path, 'normal_one', `${ob.uuid - 1}`) : path.join(output_path, 'wrong_one', `${Math.abs(ob.uuid) - 1}`)
 
         fse.ensureDirSync(copy_path)
-        fse.copy(
+        let prom = fse.copy(
           imgs_path[i],
           path.join(copy_path, path.parse(imgs_path[i]).base)
         )
-
+        copy_promise.push(prom)
       }
     }
 
-    return true
+    return copy_promise
   } catch (err) {
     console.log(err)
     return false
