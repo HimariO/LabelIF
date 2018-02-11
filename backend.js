@@ -192,8 +192,9 @@ store.Subscript(CENTER_VIEW_EVENT, TopBarEvent)
 
 
 function InitCanvasDragDrop() {
-  var box, isDown, origX, origY;
-  var move_onece = false;
+  var box, isDown, origX, origY
+  var move_onece = false
+  var start_draw = false
 
   canvas.on('mouse:down', function(o){
     isDown = true
@@ -203,29 +204,10 @@ function InitCanvasDragDrop() {
 
     switch (store.channels_state[CENTER_VIEW_EVENT].operation_mode) {
       case 'DRAW_BOX':
-        box = new fabric.Rect({
-          left: pointer.x,
-          top: pointer.y,
-          width: 1,
-          height: 1,
-          opacity: 0.7,
-          strokeWidth: 5,
-          stroke: 'red',
-          fill: 'rgba(0,0,0,0)',
-          selectable: true,
-          originX: 'left',
-          originY: 'top'
-        })
 
-        canvas.add(box)
-        util.setAllBox(
-          canvas,
-          store.channels_state[CENTER_VIEW_EVENT].current_boxs,
-          { opacity: 0.2 }
-        )
         break;
       default:
-        console.log('Canvas got click!')
+        // console.log('Canvas got click!')
     }
   })
 
@@ -234,23 +216,53 @@ function InitCanvasDragDrop() {
 
     switch (store.channels_state[CENTER_VIEW_EVENT].operation_mode) {
       case 'DRAW_BOX':
-        var pointer = canvas.getPointer(o.e)
-        var left = pointer.x < origX ? pointer.x : origX
-        var top = pointer.y < origY ? pointer.y : origY
+        if(!move_onece) {
+          // create new box
+          start_draw = true
+          var pointer = canvas.getPointer(o.e)
 
-        box.set({
-          left: left,
-          top: top,
-          width: Math.abs(origX - pointer.x),
-          height: Math.abs(origY - pointer.y),
-        })
+          box = new fabric.Rect({
+            left: pointer.x,
+            top: pointer.y,
+            width: 1,
+            height: 1,
+            opacity: 0.7,
+            strokeWidth: 5,
+            stroke: 'red',
+            fill: 'rgba(0,0,0,0)',
+            selectable: true,
+            originX: 'left',
+            originY: 'top'
+          })
+
+          canvas.add(box)
+          util.setAllBox(
+            canvas,
+            store.channels_state[CENTER_VIEW_EVENT].current_boxs,
+            { opacity: 0.2 }
+          )
+        }
+        else {
+          // udpate newly drawed box
+          var pointer = canvas.getPointer(o.e)
+          var left = pointer.x < origX ? pointer.x : origX
+          var top = pointer.y < origY ? pointer.y : origY
+
+          box.set({
+            left: left,
+            top: top,
+            width: Math.abs(origX - pointer.x),
+            height: Math.abs(origY - pointer.y),
+          })
+        }
 
         canvas.renderAll()
         break
 
       case 'VIEW':
-        if(move_onece) break
         let trigger_obj = canvas.findTarget(o.e)
+        if(move_onece) break
+        if(trigger_obj === undefined) break // group selection will trigger this event too.
 
         util.setAllBox(
           canvas,
@@ -275,6 +287,8 @@ function InitCanvasDragDrop() {
 
     switch (store.channels_state[CENTER_VIEW_EVENT].operation_mode) {
       case 'DRAW_BOX':
+        if(!start_draw) break
+
         box.set({
           stroke: 'rgba(129, 250, 92, 170)',
         })
@@ -308,6 +322,8 @@ function InitCanvasDragDrop() {
           store.channels_state[CENTER_VIEW_EVENT].current_boxs,
           { opacity: 0.7 }
         )
+
+        start_draw = false
         break
 
       case 'VIEW':
