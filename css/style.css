@@ -90,11 +90,15 @@ p {
   color: #5f6982;
 }
 
+#upload-section {
+  display: flex;
+  align-items: center;
+}
+
 .uploader {
-  display: block;
   clear: both;
   margin: 0 auto;
-  margin-top: 40vh;
+  /*margin-top: 40vh;*/
   width: 100%;
   max-width: 600px;
 }
