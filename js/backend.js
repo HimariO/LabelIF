@@ -1,8 +1,8 @@
 const fs = require('fs')
 const fse = require('fs-extra')
 const path = require('path')
-const util = require('./util')
-const Store = require('./store')
+const util = require('./js/util')
+const Store = require('./js/store')
 
 root_path = ''
 imgs_path = []
